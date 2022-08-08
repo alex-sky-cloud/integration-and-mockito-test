@@ -20,6 +20,7 @@
     <modules>
         <module>benchmarking-jmh-tests-rieckpil</module>
         <module>benchmarking-jmh-tests</module>
+        <module>boot-junit5</module>
     </modules>
 
 
