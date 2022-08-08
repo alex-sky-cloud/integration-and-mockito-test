@@ -22,7 +22,8 @@
         <module>benchmarking-jmh-tests</module>
         <module>boot-junit5</module>
         <module>demo-wiremock</module>
-        <module>Junit5-parallel-tests-example</module>
+        <module>junit5-parallel-tests-example</module>
+        <module>testing-with-mockmvc</module>
 
     </modules>
 
