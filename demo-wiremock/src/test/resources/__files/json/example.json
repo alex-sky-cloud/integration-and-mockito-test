@@ -1,0 +1,35 @@
+{
+    "d": {
+        "results": [
+            {
+                "ADiscSpace": "0.00",
+                "DiscType": "MID",
+                "UpSpace": "0.00",
+                "DiscSpace": "1200.00",
+                "DiscType": "SSD",
+                "Block": "023",
+
+                "__metadata": {
+                    "id": "https://h(Year='2021',lock='023')",
+                    "type": "ys",
+                    "uri": "https://(Year='2021',lock='023')"
+                }
+            },
+            {
+                "ADiscSpace": "0.00",
+                "DiscType": "MID",
+                "UpSpace": "0.00",
+                "DiscSpace": "1200.00",
+                "DiscType": "SSD",
+                "Block": "023",
+
+                "__metadata": {
+                    "id": "https://h(Year='2021',lock='023')",
+                    "type": "ys",
+                    "uri": "https://(Year='2021',lock='023')"
+                }
+            }
+        ]
+    },
+    "id": "0001"
+}
