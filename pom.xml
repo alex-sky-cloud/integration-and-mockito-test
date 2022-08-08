@@ -19,6 +19,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>benchmarking-jmh-tests-rieckpil</module>
+        <module>benchmarking-jmh-tests</module>
     </modules>
 
 
