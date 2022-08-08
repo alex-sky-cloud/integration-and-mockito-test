@@ -29,7 +29,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package de.rieckpil.blog;
+package org.blog;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;

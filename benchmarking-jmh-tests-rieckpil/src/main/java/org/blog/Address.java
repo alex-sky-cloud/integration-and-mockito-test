@@ -1,4 +1,4 @@
-package de.rieckpil.blog;
+package org.blog;
 
 import java.util.Objects;
 
