@@ -19,11 +19,15 @@ class TestingWithMockmvcApplicationTests {
     private MockMvc mockMvc;
 
     @Test
-    public void shouldAllowDeletingReviewsWhenUserIsAdmin() throws Exception {
+    void shouldAllowDeletingReviewsWhenUserIsAdmin() throws Exception {
+
         this.mockMvc
                 .perform(
                         delete("/api/tasks/42")
-                                .with(SecurityMockMvcRequestPostProcessors.user("duke").roles("ADMIN", "SUPER_USER"))
+                                .with(
+                                        SecurityMockMvcRequestPostProcessors.user("duke")
+                                                .roles("ADMIN", "SUPER_USER")
+                                )
                                 .with(csrf())
                 )
                 .andExpect(status().isOk());

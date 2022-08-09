@@ -18,7 +18,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TaskController.class)
-public class TaskControllerSecondTest {
+class TaskControllerSecondTest {
 
   @Autowired
   private WebApplicationContext context;
@@ -37,14 +37,14 @@ public class TaskControllerSecondTest {
   }
 
   @Test
-  public void shouldRejectDeletingReviewsWhenUserIsNotAdmin() throws Exception {
+  void shouldRejectDeletingReviewsWhenUserIsNotAdmin() throws Exception {
     this.mockMvc
       .perform(delete("/api/tasks/42").with(csrf()))
       .andExpect(status().isUnauthorized());
   }
 
   @Test
-  public void shouldAllowDeletingReviewsWhenUserIsAdmin() throws Exception {
+  void shouldAllowDeletingReviewsWhenUserIsAdmin() throws Exception {
     this.mockMvc
       .perform(
         delete("/api/tasks/42")

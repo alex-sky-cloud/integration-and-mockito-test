@@ -1,7 +1,5 @@
 package com.example.testingwithmockmvc.blog.task;
 
-import com.example.testingwithmockmvc.blog.task.TaskController;
-import com.example.testingwithmockmvc.blog.task.TaskService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -25,60 +24,106 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(TaskController.class)
 class TaskControllerTest {
 
-  @Autowired
-  private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-  @MockBean
-  private TaskService taskService;
+    @MockBean
+    private TaskService taskService;
 
-  @Test
-  public void shouldRejectCreatingReviewsWhenUserIsAnonymous() throws Exception {
-    this.mockMvc
-      .perform(
-        post("/api/tasks")
-          .contentType(MediaType.APPLICATION_JSON)
-          .content("{\"taskTitle\": \"Learn MockMvc\"}")
-          .with(csrf())
-      )
-      .andExpect(status().isUnauthorized());
-  }
+    @Test
+    void shouldRejectCreatingReviewsWhenUserIsAnonymous() throws Exception {
 
-  @Test
-  public void shouldReturnLocationOfReviewWhenUserIsAuthenticatedAndCreatesReview() throws Exception {
+        this.mockMvc
+                .perform(
+                        post("/api/tasks")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"taskTitle\": \"Learn MockMvc\"}")
+                                .with(csrf())
+                )
+                /*проверяем статус, сообщающий, что запрос от неавторизованного пользователя*/
+                .andExpect(status().isUnauthorized());
+    }
 
-    when(taskService.createTask(anyString())).thenReturn(42L);
+    @Test
+    void shouldReturnLocationOfReviewWhenUserIsAuthenticatedAndCreatesReview() throws Exception {
 
-    this.mockMvc
-      .perform(
-        post("/api/tasks")
-          .contentType(MediaType.APPLICATION_JSON)
-          .content("{\"taskTitle\": \"Learn MockMvc\"}")
-          .with(csrf())
-          .with(user("duke"))
-      )
-      .andExpect(status().isCreated())
-      .andExpect(header().exists("Location"))
-      .andExpect(header().string("Location", Matchers.containsString("42")));
-  }
+        Long serviceTask = taskService.createTask(anyString());
 
-  @Test
-  @WithMockUser("duke")
-  public void shouldRejectDeletingReviewsWhenUserLacksAdminRole() throws Exception {
-    this.mockMvc
-      .perform(delete("/api/tasks/42"))
-      .andExpect(status().isForbidden());
-  }
+        long idExpectedTask = 42L;
 
-  @Test
-  public void shouldAllowDeletingReviewsWhenUserIsAdmin() throws Exception {
-    this.mockMvc
-      .perform(
-        delete("/api/tasks/42")
-          .with(SecurityMockMvcRequestPostProcessors.user("duke").roles("ADMIN", "SUPER_USER"))
-          .with(csrf())
-      )
-      .andExpect(status().isOk());
+        when(serviceTask).thenReturn(idExpectedTask);
 
-    verify(taskService).deleteTask(42L);
-  }
+        ResultActions resultActions = this.mockMvc
+                .perform(
+                        post("/api/tasks")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"taskTitle\": \"Learn MockMvc\"}")
+                                .with(csrf())
+                                /**указываем пользователя, который будет аутентифицирован
+                                 * и любые другие атрибуты, необходимые, чтобы попасть
+                                 * на защищенный endpoint*/
+                                .with(SecurityMockMvcRequestPostProcessors.user("duke"))
+                );
+
+        String redirectedUrl = resultActions.andReturn().getResponse().getRedirectedUrl();
+        System.out.println(redirectedUrl);
+
+        String idExpectedTaskInStr = String.valueOf(idExpectedTask);
+
+        String uriRedirectExpected = "http://localhost/api/tasks/" + idExpectedTaskInStr;
+
+        resultActions
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"))
+                .andExpect(
+                        header()
+                                .string("Location", Matchers.containsString(idExpectedTaskInStr)
+                                )
+                )
+                .andExpect(header()
+                        .string("Location", Matchers.containsString(uriRedirectExpected)
+                        )
+                );
+    }
+
+    /**
+     * указываем, что пользователь `duke` должен удалить запись,
+     * при этом проверяем, что данному пользователю запрещено это сделать,
+     * так как endpoint позволяет работать с ним пользователям,
+     * с определенным уровнем доступа.
+     * @throws Exception
+     */
+    @Test
+    @WithMockUser("duke")
+    void shouldRejectDeletingReviewsWhenUserLacksAdminRole() throws Exception {
+
+        this.mockMvc
+                .perform(delete("/api/tasks/42"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldAllowDeletingReviewsWhenUserIsAdmin() throws Exception {
+
+        this.mockMvc
+                .perform(
+                        delete("/api/tasks/42")
+                                /**
+                                 * указываем какие роли и какое имя пользователя
+                                 * нужно использовать, чтобы выполнить защищенный endpoint
+                                 */
+                                .with(
+                                        SecurityMockMvcRequestPostProcessors.user("duke")
+                                                .roles("ADMIN", "SUPER_USER")
+                                )
+                                .with(csrf())
+                )
+                .andExpect(status().isOk());
+
+        /**
+         * используем макет (mock) сервиса, передаем туда параметр,
+         * чтобы метод выполнился
+         */
+        verify(taskService).deleteTask(42L);
+    }
 }

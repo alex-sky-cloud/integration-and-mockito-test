@@ -51,7 +51,6 @@ class UserControllerTest {
   @MockBean
   private UserService userService;
 
-
   @BeforeEach
   public void setup() {
     mockMvc = MockMvcBuilders
