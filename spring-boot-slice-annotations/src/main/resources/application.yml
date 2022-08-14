@@ -1,0 +1,17 @@
+# Инициализация загрузки и запуск настройки встроенной базы MongoDb
+# для интеграционных тестов
+spring:
+  mongodb:
+    embedded:
+      version: 3.4.2
+
+# логгирование работы MongoDb
+logging:
+  level:
+    org:
+      mongodb: info
+      springframework:
+        boot:
+          autoconfigure:
+            mongo:
+              embedded: info
