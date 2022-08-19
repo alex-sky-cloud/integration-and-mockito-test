@@ -24,6 +24,8 @@
         <module>demo-wiremock</module>
         <module>junit5-parallel-tests-example</module>
         <module>testing-with-mockmvc</module>
+        <module>spring-boot-slice-annotations</module>
+        <module>demo-crud-application</module>
 
     </modules>
 
