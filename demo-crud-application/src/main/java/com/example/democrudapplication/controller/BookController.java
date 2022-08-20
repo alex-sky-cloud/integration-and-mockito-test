@@ -21,6 +21,15 @@ public class BookController {
 
   private final BookService bookService;
 
+  /**
+   * После создания объекта, пользователь будет перенаправлен на адрес,
+   * который позволит запросить только что созданный объект
+   * @param bookRequest - запрос пользователя на создание Book
+   * @param uriComponentsBuilder - компонент, для постороения метаинформации, для перенаправления
+   *                             пользователя
+   * @return возвращает код успешного создания объекта и адрес перенарпавления на следующий
+   * ресурс
+   */
   @PostMapping
   public ResponseEntity<Void> createNewBook(@Valid @RequestBody BookRequest bookRequest,
                                             UriComponentsBuilder uriComponentsBuilder) {
@@ -57,5 +66,4 @@ public class BookController {
     bookService.deleteBookById(id);
     return ResponseEntity.ok().build();
   }
-
 }

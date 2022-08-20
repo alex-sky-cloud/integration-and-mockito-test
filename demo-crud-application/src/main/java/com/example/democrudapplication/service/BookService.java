@@ -40,6 +40,9 @@ public class BookService {
   public Book getBookById(Long id) {
     Optional<Book> requestedBook = bookRepository.findById(id);
 
+    /**В случае, если данный блок выполниться, то будет сформирован автоматически
+    * ответ для клиента, так как над {@link BookNotFoundException} установлена соответствующая
+     * аннотация*/
     if (requestedBook.isEmpty()) {
       throw new BookNotFoundException(String.format("Book with id: '%s' not found", id));
     }
@@ -52,6 +55,9 @@ public class BookService {
 
     Optional<Book> bookFromDatabase = bookRepository.findById(id);
 
+    /**В случае, если данный блок выполниться, то будет сформирован автоматически
+     * ответ для клиента, так как над {@link BookNotFoundException} установлена соответствующая
+     * аннотация*/
     if (bookFromDatabase.isEmpty()) {
       throw new BookNotFoundException(String.format("Book with id: '%s' not found", id));
     }
