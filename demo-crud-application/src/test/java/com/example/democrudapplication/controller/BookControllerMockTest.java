@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(SpringExtension.class)
 /*указываем, что в контекст нужно инициализировать только компонент BookController,
-* остальные зависимости будут заменены макетами*/
+ * остальные зависимости будут заменены макетами*/
 @WebMvcTest(BookController.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BookControllerMockTest {
@@ -43,7 +43,7 @@ class BookControllerMockTest {
   private ObjectMapper objectMapper;
 
   /*создаем макет компонента BookService, так как проверяем только endpoint в Контроллере,
-  * который нуждается в зависимости  BookService*/
+   * который нуждается в зависимости  BookService*/
   @MockBean
   private BookService bookService;
 
@@ -102,7 +102,7 @@ class BookControllerMockTest {
       .getAuthor();
     assertThat(authorActual, is("Duke"));
 
-    String isbnActual  = bookRequestArgumentCaptor
+    String isbnActual = bookRequestArgumentCaptor
       .getValue()
       .getIsbn();
     assertThat(isbnActual, is("1337"));
@@ -114,12 +114,20 @@ class BookControllerMockTest {
   }
 
 
+  /*проверяем запрос на endpoint*/
   @Test
   void allBooksEndpointShouldReturnTwoBooks() throws Exception {
 
-    when(bookService.getAllBooks()).thenReturn(List.of(
+    List<Book> bookListExpected = List.of(
       createBook(1L, "Java 11", "Duke", "1337"),
-      createBook(2L, "Java EE 8", "Duke", "1338")));
+      createBook(2L, "Java EE 8", "Duke", "1338")
+    ); /*формируем список элементов, который возвратит макет*/
+
+    List<Book> allBooks = bookService.getAllBooks();
+
+    /*указываем ответ, который должен вернуть макет сервиса BookService*/
+    when(allBooks)
+      .thenReturn(bookListExpected);
 
     this.mockMvc
       .perform(get("/api/books"))
@@ -133,10 +141,14 @@ class BookControllerMockTest {
 
   }
 
+  /*Проверка запроса с получением одной единицы объекта*/
   @Test
   void getBookWithIdOneShouldReturnABook() throws Exception {
 
-    when(bookService.getBookById(1L)).thenReturn(createBook(1L, "Java 11", "Duke", "1337"));
+    Book book = createBook(1L, "Java 11", "Duke", "1337");
+
+    /*указываем данные, которые должен вернуть макет*/
+    when(bookService.getBookById(1L)).thenReturn(book);
 
     this.mockMvc
       .perform(get("/api/books/1"))
@@ -149,62 +161,91 @@ class BookControllerMockTest {
 
   }
 
+  /*Проверяем, что в случае запроса, если запрашиваемого ресурса нет,
+   * будет сформирован ответ об ошибке*/
   @Test
   void getBookWithUnknownIdShouldReturn404() throws Exception {
 
-    when(bookService.getBookById(1L)).thenThrow(new BookNotFoundException("Book with id '1' not found"));
+    BookNotFoundException bookNotFoundException = new BookNotFoundException("Book with id '1' not found");
+    Book bookById = bookService.getBookById(1L);
 
+    /*Указываем, что когда будет вызван макет сервиса BookService, тогда будет имитирован выброс Exception,
+     * который в свою очередь будет перехвачен обработчиком Exceptions и затем будет сформирован,
+     * автоматически ответ с ошибкой (для клиента)*/
+    when(bookById)
+      .thenThrow(bookNotFoundException);
+
+    /*ожидаем ответ, который сообщит о том, что данного ресурса нет*/
     this.mockMvc
       .perform(get("/api/books/1"))
       .andExpect(status().isNotFound());
 
   }
 
+
   @Test
-  public void updateBookWithKnownIdShouldUpdateTheBook() throws Exception {
+  void updateBookWithKnownIdShouldUpdateTheBook() throws Exception {
 
-    BookRequest bookRequest = new BookRequest();
-    bookRequest.setAuthor("Duke");
-    bookRequest.setIsbn("1337");
-    bookRequest.setTitle("Java 12");
+    /*Данные для обновления, будут получены в тот момент, когда
+     * на endpoint '/api/books/1' поступят параметры для обновления.
+     * Затем данные из этого же объекта, будут использованы для проверки, того,
+     * что эти фактические данные, совпадают с ожидаемыми*/
 
-    when(bookService.updateBook(eq(1L), bookRequestArgumentCaptor.capture()))
-      .thenReturn(createBook(1L, "Java 12", "Duke", "1337"));
+    Long idBookActual = eq(1L);
+    this.bookRequest.setTitle("Java 12");
+
+    BookRequest bookRequestArgumentCaptureActual = bookRequestArgumentCaptor.capture();
+    Book updateBook = bookService.updateBook(idBookActual, bookRequestArgumentCaptureActual);
+
+    Long idBookExpected = 1L;
+    String titleExpected = "Java 12";
+    String authorExpected = "Duke";
+    String isbnExpected = "1337";
+    Book bookMockExpected = createBook(idBookExpected, titleExpected, authorExpected, isbnExpected);
+
+    when(updateBook)
+      .thenReturn(bookMockExpected);
+
+
+    String updateBookInJson = objectMapper.writeValueAsString(this.bookRequest);
 
     this.mockMvc
       .perform(put("/api/books/1")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(bookRequest)))
+        .content(updateBookInJson)
+      )
       .andExpect(status().isOk())
       .andExpect(content().contentType("application/json"))
-      .andExpect(jsonPath("$.title", is("Java 12")))
-      .andExpect(jsonPath("$.author", is("Duke")))
-      .andExpect(jsonPath("$.isbn", is("1337")))
-      .andExpect(jsonPath("$.id", is(1)));
+      .andExpect(jsonPath("$.title", is(titleExpected)))
+      .andExpect(jsonPath("$.author", is(authorExpected)))
+      .andExpect(jsonPath("$.isbn", is(isbnExpected)))
+      .andExpect(jsonPath("$.id", is(1)));  /*важно. Здесь нельзя использовать суффикс L или F*/
 
-    assertThat(bookRequestArgumentCaptor.getValue().getAuthor(), is("Duke"));
-    assertThat(bookRequestArgumentCaptor.getValue().getIsbn(), is("1337"));
-    assertThat(bookRequestArgumentCaptor.getValue().getTitle(), is("Java 12"));
 
+    assertThat(bookRequestArgumentCaptor.getValue().getAuthor(), is(authorExpected));
+    assertThat(bookRequestArgumentCaptor.getValue().getIsbn(), is(isbnExpected));
+    assertThat(bookRequestArgumentCaptor.getValue().getTitle(), is(titleExpected));
   }
 
   @Test
-  public void updateBookWithUnknownIdShouldReturn404() throws Exception {
+  void updateBookWithUnknownIdShouldReturn404() throws Exception {
 
-    BookRequest bookRequest = new BookRequest();
-    bookRequest.setAuthor("Duke");
-    bookRequest.setIsbn("1337");
-    bookRequest.setTitle("Java 12");
+    Long idBookRequested = eq(42L);
+    BookRequest bookRequestActual = bookRequestArgumentCaptor.capture();
 
-    when(bookService.updateBook(eq(42L), bookRequestArgumentCaptor.capture()))
+    Book updateBook = bookService.updateBook(idBookRequested, bookRequestActual);
+    when(updateBook)
       .thenThrow(new BookNotFoundException("The book with id '42' was not found"));
 
     this.mockMvc
       .perform(put("/api/books/42")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(bookRequest)))
-      .andExpect(status().isNotFound());
-
+        .content(
+          objectMapper.writeValueAsString(this.bookRequest))
+      )
+      .andExpect(
+        status().isNotFound()
+      );
   }
 
   /**
